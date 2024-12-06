@@ -21,12 +21,15 @@ export type FrameworkCallServerConfig = {
 };
 
 export type FrameworkOptions = {
-  callServer: FrameworkCallServerConfig;
+  callServer?: FrameworkCallServerConfig;
   entries: FrameworkEntries;
 };
 
 export function framework({
-  callServer,
+  callServer = {
+    browser: "#framework/call-server-browser",
+    prerender: "#framework/call-server-prerender",
+  },
   entries,
 }: FrameworkOptions): vite.PluginOption {
   let env: vite.ConfigEnv;
