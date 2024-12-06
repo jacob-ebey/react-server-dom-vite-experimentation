@@ -1,0 +1,20 @@
+{
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "vite build --app",
+    "dev": "vite dev"
+  },
+  "dependencies": {
+    "@jacob-ebey/react-server-dom-vite": "19.0.0-experimental.5",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@mjackson/node-fetch-server": "0.4.1",
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.1",
+    "@types/react-dom": "^19.0.1",
+    "vite": "^6.0.3"
+  }
+}
