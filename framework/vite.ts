@@ -1,4 +1,7 @@
+import * as crypto from "node:crypto";
+
 import { createRequestListener } from "@mjackson/node-fetch-server";
+import { clientTransform, serverTransform } from "unplugin-rsc";
 import type * as vite from "vite";
 
 import {
@@ -19,6 +22,28 @@ export type FrameworkOptions = {
 export function framework({ entries }: FrameworkOptions): vite.PluginOption {
   let env: vite.ConfigEnv;
   let devServerURL: URL | undefined;
+  const clientModules = new Map<string, string>();
+
+  function generateId(
+    filename: string,
+    directive: "use client" | "use server"
+  ) {
+    if (directive === "use server") {
+      throw new Error("server actions are not yet implemented");
+    }
+
+    if (env.command === "build") {
+      const hash = crypto
+        .createHash("sha256")
+        .update(filename)
+        .digest("hex")
+        .slice(0, 8);
+      clientModules.set(filename, hash);
+      return hash;
+    }
+
+    return filename;
+  }
 
   return [
     {
@@ -68,7 +93,7 @@ export function framework({ entries }: FrameworkOptions): vite.PluginOption {
       },
     },
     {
-      name: "framework:call-server",
+      name: "framework:virtual-react-client",
       resolveId(id) {
         if (id === "framework/react-client") {
           return "\0virtual:framework/react-client";
@@ -86,6 +111,7 @@ export function framework({ entries }: FrameworkOptions): vite.PluginOption {
 
           return `
             const devServerURL = ${JSON.stringify(devServerURL.href)};
+            
             export function callServer(request) {
               const hasBody = request.method !== "GET" && request.method !== "HEAD" && !!request.body;
 
@@ -102,6 +128,37 @@ export function framework({ entries }: FrameworkOptions): vite.PluginOption {
                 })
               );
             }
+
+            export const manifest = {
+              resolveClientReference([id, name]) {
+                let modPromise;
+                return {
+                  preload: async () => {
+                    if (modPromise) {
+                      return modPromise;
+                    }
+
+                    modPromise = import(/* @vite-ignore */ id);
+                    return modPromise
+                      .then((mod) => {
+                        modPromise.mod = mod;
+                      })
+                      .catch((error) => {
+                        modPromise.error = error;
+                      });
+                  },
+                  get: () => {
+                    if (!modPromise) {
+                      throw new Error(\`Module "\${id}" not preloaded\`);
+                    }
+                    if ("error" in modPromise) {
+                      throw modPromise.error;
+                    }
+                    return modPromise.mod[name];
+                  },
+                };
+              },
+            };
           `;
         }
       },
@@ -155,6 +212,25 @@ export function framework({ entries }: FrameworkOptions): vite.PluginOption {
               })
             );
           })(req, res);
+        });
+      },
+    },
+    {
+      name: "framework:react-transform",
+      transform(code, id) {
+        if (this.environment.name === "server") {
+          return serverTransform(code, id, {
+            id: generateId,
+            importClient: "registerClientReference",
+            importFrom: "@jacob-ebey/react-server-dom-vite/server",
+            importServer: "registerServerReference",
+          });
+        }
+
+        return clientTransform(code, id, {
+          id: generateId,
+          importFrom: "@jacob-ebey/react-server-dom-vite/client",
+          importServer: "createServerReference",
         });
       },
     },

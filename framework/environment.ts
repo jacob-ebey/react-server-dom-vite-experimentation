@@ -24,12 +24,7 @@ export function workerDevEnvironmentFactory({
     config: vite.ResolvedConfig
   ): FetchableDevEnvironment => {
     const allConditions = [
-      ...new Set([
-        ...config.environments[name].resolve.conditions,
-        ...config.resolve.conditions,
-        ...config.environments[name].resolve.externalConditions,
-        ...config.resolve.externalConditions,
-      ]),
+      ...new Set([...config.environments[name].resolve.externalConditions]),
     ].flatMap((condition) => ["--conditions", condition]);
 
     const worker = new wt.Worker("./worker-script.js", {

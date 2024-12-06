@@ -8,7 +8,8 @@
   "dependencies": {
     "@jacob-ebey/react-server-dom-vite": "19.0.0-experimental.5",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "rsc-html-stream": "^0.0.4"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
@@ -16,6 +17,7 @@
     "@types/node": "^22.0.0",
     "@types/react": "^19.0.1",
     "@types/react-dom": "^19.0.1",
+    "unplugin-rsc": "0.0.11",
     "vite": "^6.0.3"
   }
 }
