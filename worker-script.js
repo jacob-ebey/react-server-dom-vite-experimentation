@@ -139,5 +139,3 @@ async function handleFetch({ id, entry, url, method, headers, hasBody }) {
     });
   }
 }
-
-console.debug("created worker", options.name);

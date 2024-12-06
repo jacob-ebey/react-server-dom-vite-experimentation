@@ -17,8 +17,6 @@ const manifest = {
 };
 
 export async function handleFetch(request: Request) {
-  console.log("prerender", request.method, request.url);
-
   const serverResponse = await callServer(request);
 
   const node = await createFromNodeStream(

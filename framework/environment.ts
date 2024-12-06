@@ -23,7 +23,6 @@ export function workerDevEnvironmentFactory({
     name: string,
     config: vite.ResolvedConfig
   ): FetchableDevEnvironment => {
-    console.debug("creating environment", name);
     const allConditions = [
       ...new Set([
         ...config.environments[name].resolve.conditions,
@@ -33,7 +32,6 @@ export function workerDevEnvironmentFactory({
       ]),
     ].flatMap((condition) => ["--conditions", condition]);
 
-    console.log({ allConditions });
     const worker = new wt.Worker("./worker-script.js", {
       env: {
         ...process.env,
