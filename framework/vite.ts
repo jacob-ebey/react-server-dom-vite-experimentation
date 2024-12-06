@@ -4,7 +4,7 @@ import type * as vite from "vite";
 import {
   type FetchableDevEnvironment,
   workerDevEnvironmentFactory,
-} from "./environment";
+} from "./environment.js";
 
 export type FrameworkEntries = {
   browser: string;

@@ -133,7 +133,7 @@ class WorkerDevEnvironment
 
     let controller: ReadableStreamDefaultController<Uint8Array>;
     const deferredResponse = new Deferred<Response>();
-    const listenForResponse = (value) => {
+    const listenForResponse = (value: any) => {
       if (value?.type === "response" && value.id === id) {
         const body = value.hasBody
           ? new ReadableStream<Uint8Array>({
@@ -182,13 +182,13 @@ class WorkerHotChannel implements vite.HotChannel {
     this.onMessage = this.onMessage.bind(this);
   }
 
-  onMessage(message) {
+  onMessage(message: any) {
     if (message.type === "module-runner") {
       const events = this.callbacks.get(message.payload.event);
       if (events) {
         for (const event of events) {
           event(message.payload.data, {
-            send: (payload) => {
+            send: (payload: any) => {
               this.worker.postMessage({
                 type: "module-runner",
                 payload,
@@ -208,13 +208,13 @@ class WorkerHotChannel implements vite.HotChannel {
     this.worker.off("message", this.onMessage);
   }
 
-  on(event, listener) {
+  on(event: unknown, listener: unknown): void {
     const events = this.callbacks.get(event) ?? new Set();
     events.add(listener);
     this.callbacks.set(event, events);
   }
 
-  off(event, listener) {
+  off(event: unknown, listener: unknown) {
     const events = this.callbacks.get(event);
     if (events) {
       events.delete(listener);
@@ -230,8 +230,8 @@ class WorkerHotChannel implements vite.HotChannel {
 }
 
 class Deferred<T> {
-  resolve: (value: T) => void;
-  reject: (reason: unknown) => void;
+  resolve!: (value: T) => void;
+  reject!: (reason: unknown) => void;
   promise: Promise<T>;
 
   constructor() {
