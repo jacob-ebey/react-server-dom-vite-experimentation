@@ -15,11 +15,20 @@ export type FrameworkEntries = {
   server: string;
 };
 
+export type FrameworkCallServerConfig = {
+  browser: string;
+  prerender: string;
+};
+
 export type FrameworkOptions = {
+  callServer: FrameworkCallServerConfig;
   entries: FrameworkEntries;
 };
 
-export function framework({ entries }: FrameworkOptions): vite.PluginOption {
+export function framework({
+  callServer,
+  entries,
+}: FrameworkOptions): vite.PluginOption {
   let env: vite.ConfigEnv;
   let devServerURL: URL | undefined;
   const clientModules = new Map<string, string>();
@@ -53,10 +62,28 @@ export function framework({ entries }: FrameworkOptions): vite.PluginOption {
         env = _env;
 
         return {
+          builder: {
+            async buildApp(builder) {
+              let needsRebuild = true;
+              while (needsRebuild) {
+                needsRebuild = false;
+                const lastClientModulesCount = clientModules.size;
+                await builder.build(builder.environments.server);
+                await Promise.all([
+                  builder.build(builder.environments.browser),
+                  builder.build(builder.environments.prerender),
+                ]);
+                if (lastClientModulesCount !== clientModules.size) {
+                  needsRebuild = true;
+                }
+              }
+            },
+          },
           environments: {
             browser: {
               consumer: "client",
               build: {
+                outDir: "dist/browser",
                 rollupOptions: {
                   input: entries.browser,
                 },
@@ -65,6 +92,7 @@ export function framework({ entries }: FrameworkOptions): vite.PluginOption {
             prerender: {
               consumer: "server",
               build: {
+                outDir: "dist/prerender",
                 rollupOptions: {
                   input: entries.prerender,
                 },
@@ -76,6 +104,7 @@ export function framework({ entries }: FrameworkOptions): vite.PluginOption {
             server: {
               consumer: "server",
               build: {
+                outDir: "dist/server",
                 rollupOptions: {
                   input: entries.server,
                 },
@@ -93,16 +122,50 @@ export function framework({ entries }: FrameworkOptions): vite.PluginOption {
       },
     },
     {
+      name: "framework:virtual-react-manifest",
+      resolveId(id) {
+        if (id === "framework/react-manifest") {
+          return "\0virtual:framework/react-manifest";
+        }
+      },
+      load(id) {
+        if (id === "\0virtual:framework/react-manifest") {
+          return `
+            export const manifest = {
+              resolveClientReference: async ([id, name]) => {
+                const mod = await import(/* @vite-ignore */ id);
+                return mod[name];
+              },
+            };
+          `;
+        }
+      },
+    },
+    {
       name: "framework:virtual-react-client",
       resolveId(id) {
         if (id === "framework/react-client") {
           return "\0virtual:framework/react-client";
         }
       },
-      load(id) {
+      async load(id) {
         if (id === "\0virtual:framework/react-client") {
           if (env.command === "build") {
-            throw new Error("not yet implemented");
+            return `
+              export * from ${JSON.stringify(
+                (
+                  await this.resolve(
+                    this.environment.name === "browser"
+                      ? callServer.browser
+                      : callServer.prerender
+                  )
+                )?.id ??
+                  (this.environment.name === "browser"
+                    ? callServer.browser
+                    : callServer.prerender)
+              )};
+              export * as manifest from "framework/react-manifest";
+            `;
           }
 
           if (!devServerURL) {
@@ -222,7 +285,7 @@ export function framework({ entries }: FrameworkOptions): vite.PluginOption {
           return serverTransform(code, id, {
             id: generateId,
             importClient: "registerClientReference",
-            importFrom: "@jacob-ebey/react-server-dom-vite/server",
+            importFrom: "#framework/references-server",
             importServer: "registerServerReference",
           });
         }

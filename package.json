@@ -1,12 +1,19 @@
 {
   "private": true,
   "type": "module",
+  "imports": {
+    "#framework/references-client": "./framework/references-client.js",
+    "#framework/references-server": "./framework/references-server.js",
+    "#framework/worker-production": "./framework/worker-production.js"
+  },
   "scripts": {
     "build": "vite build --app",
-    "dev": "vite dev"
+    "dev": "vite dev",
+    "start": "node ./framework/serve.js dist/prerender/entry.prerender.js dist/server/entry.server.js"
   },
   "dependencies": {
     "@jacob-ebey/react-server-dom-vite": "19.0.0-experimental.5",
+    "express": "^4.21.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "rsc-html-stream": "^0.0.4"

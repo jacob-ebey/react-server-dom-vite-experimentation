@@ -1,7 +1,7 @@
 import * as stream from "node:stream";
 
 // @ts-expect-error - no types
-import { renderToPipeableStream } from "@jacob-ebey/react-server-dom-vite/server";
+import RSD from "@jacob-ebey/react-server-dom-vite/server";
 
 import { Counter } from "./counter.js";
 
@@ -17,7 +17,7 @@ const manifest = {
 };
 
 export function handleFetch(request: Request) {
-  const { abort, pipe } = renderToPipeableStream(
+  const { abort, pipe } = RSD.renderToPipeableStream(
     <>
       <h1>Hello, server!</h1>
       <Counter />

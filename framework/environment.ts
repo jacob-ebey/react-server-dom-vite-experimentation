@@ -4,6 +4,8 @@ import { fileURLToPath } from "node:url";
 
 import * as vite from "vite";
 
+import { fetchWorker } from "./worker-shared.js";
+
 export interface FetchableDevEnvironment extends vite.DevEnvironment {
   dispatchFetch(entry: string, request: Request): Promise<Response>;
 }
@@ -17,7 +19,10 @@ export function workerDevEnvironmentFactory({
 }: WorkerDevEnvironmentFactoryOptions = {}) {
   workerScript =
     workerScript ||
-    path.join(path.dirname(fileURLToPath(import.meta.url)), "worker-script.js");
+    path.join(
+      path.dirname(fileURLToPath(import.meta.url)),
+      "worker-development.js"
+    );
 
   return (
     name: string,
@@ -27,7 +32,7 @@ export function workerDevEnvironmentFactory({
       ...new Set([...config.environments[name].resolve.externalConditions]),
     ].flatMap((condition) => ["--conditions", condition]);
 
-    const worker = new wt.Worker("./worker-script.js", {
+    const worker = new wt.Worker(workerScript, {
       env: {
         ...process.env,
         VITE_DEV_ENVIRONMENT: JSON.stringify({
@@ -59,8 +64,6 @@ class WorkerDevEnvironment
   extends vite.DevEnvironment
   implements FetchableDevEnvironment
 {
-  private fetchCounter = 0;
-
   constructor(
     name: string,
     config: vite.ResolvedConfig,
@@ -75,98 +78,7 @@ class WorkerDevEnvironment
   }
 
   async dispatchFetch(entry: string, request: Request): Promise<Response> {
-    const id = this.fetchCounter++;
-
-    const hasRequestBody =
-      request.method !== "GET" && request.method !== "HEAD" && !!request.body;
-
-    this.worker.postMessage({
-      type: "request",
-      id,
-      entry,
-      url: request.url,
-      method: request.method,
-      headers: Array.from(request.headers.entries()),
-      hasBody: hasRequestBody,
-    });
-
-    const requestBody = request.body;
-    if (hasRequestBody && requestBody) {
-      (async () => {
-        const reader = requestBody.getReader();
-        try {
-          let read: { done: boolean; value?: Uint8Array };
-          while (!(read = await reader.read()).done) {
-            this.worker.postMessage({
-              type: "request-body",
-              id,
-              chunk: read.value,
-            });
-          }
-          this.worker.postMessage({
-            type: "request-body",
-            id,
-            done: true,
-          });
-        } catch (reason) {
-          console.error(reason);
-          const message =
-            reason instanceof Error ? reason.message : String(reason);
-          const stack = reason instanceof Error ? reason.stack : null;
-
-          this.worker.postMessage({
-            type: "request-error",
-            id,
-            message,
-            stack,
-          });
-        } finally {
-          reader.releaseLock();
-        }
-      })();
-    }
-
-    let controller: ReadableStreamDefaultController<Uint8Array>;
-    const deferredResponse = new Deferred<Response>();
-    const listenForResponse = (value: any) => {
-      if (value?.type === "response" && value.id === id) {
-        const body = value.hasBody
-          ? new ReadableStream<Uint8Array>({
-              start(c) {
-                controller = c;
-              },
-            })
-          : null;
-        deferredResponse.resolve(
-          new Response(body, {
-            headers: value.headers,
-            status: value.status,
-            statusText: value.statusText,
-          })
-        );
-        if (!value.hasBody) {
-          this.worker.off("message", listenForResponse);
-        }
-      } else if (value?.type === "response-body" && value.id === id) {
-        if (value.done) {
-          this.worker.off("message", listenForResponse);
-          controller.close();
-        } else {
-          controller.enqueue(value.chunk);
-        }
-      } else if (value?.type === "response-error" && value.id === id) {
-        this.worker.off("message", listenForResponse);
-        const err = new Error(value.message);
-        err.stack = value.stack;
-        deferredResponse.reject(err);
-        if (controller) {
-          controller.error(err);
-        }
-      }
-    };
-    this.worker.on("message", listenForResponse);
-
-    return deferredResponse.promise;
+    return fetchWorker(this.worker, request, { entry });
   }
 }
 

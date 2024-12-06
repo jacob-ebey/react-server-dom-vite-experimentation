@@ -1,7 +1,7 @@
 import * as stream from "node:stream";
 
 // @ts-expect-error - no types
-import { createFromNodeStream } from "@jacob-ebey/react-server-dom-vite/client";
+import RSD from "@jacob-ebey/react-server-dom-vite/client";
 import { renderToPipeableStream } from "react-dom/server";
 import { injectRSCPayload } from "rsc-html-stream/server";
 
@@ -18,7 +18,7 @@ export async function handleFetch(request: Request) {
   }
 
   const [rscA, rscB] = serverResponse.body.tee();
-  const node = await createFromNodeStream(
+  const node = await RSD.createFromNodeStream(
     stream.Readable.fromWeb(rscA as any),
     manifest
   );
