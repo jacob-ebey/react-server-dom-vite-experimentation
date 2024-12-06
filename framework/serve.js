@@ -21,15 +21,17 @@ if (typeof fetchFunction !== "function") {
   throw new Error(`No fetch handler function found in '${entry}'.`);
 }
 
+const browserDir = path.resolve(process.argv[4] || "dist/browser");
+
 app.use(
-  express.static("dist/browser/assets", {
+  express.static(path.join(browserDir, "assets"), {
     immutable: true,
     maxAge: "1y",
   })
 );
 
 app.use(
-  express.static("dist/browser", {
+  express.static(browserDir, {
     maxAge: "5m",
   })
 );
