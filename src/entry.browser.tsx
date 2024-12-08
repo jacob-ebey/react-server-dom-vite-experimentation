@@ -44,8 +44,6 @@ async function hydrateApp() {
     }
 
     event.intercept({
-      focusReset: "after-transition",
-      scroll: "after-transition",
       async handler() {
         const abortController = new AbortController();
         let startedTransition = false;
