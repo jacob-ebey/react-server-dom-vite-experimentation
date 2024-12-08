@@ -47,7 +47,7 @@ async function Todos() {
     fetch("https://jsonplaceholder.typicode.com/todos").then((response) =>
       response.json()
     ) as Promise<{ id: number; title: string; completed: boolean }[]>,
-    new Promise((resolve) => setTimeout(resolve, 1000)),
+    // new Promise((resolve) => setTimeout(resolve, 1000)),
   ]);
 
   return (
