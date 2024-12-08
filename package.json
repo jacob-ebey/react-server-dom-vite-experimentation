@@ -4,7 +4,6 @@
   "imports": {
     "#framework/call-server-browser": "./framework/call-server-browser.ts",
     "#framework/call-server-prerender": "./framework/call-server-prerender.ts",
-    "#framework/references-client": "./framework/references-client.js",
     "#framework/references-server": "./framework/references-server.js",
     "#framework/worker-production": "./framework/worker-production.js"
   },

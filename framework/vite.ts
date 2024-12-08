@@ -23,11 +23,13 @@ export type FrameworkCallServerConfig = {
 };
 
 export type FrameworkOptions = {
+  browserReferences?: string;
   callServer?: FrameworkCallServerConfig;
   entries: FrameworkEntries;
 };
 
 export function framework({
+  browserReferences,
   callServer = {
     browser: "#framework/call-server-browser",
     prerender: "#framework/call-server-prerender",
@@ -538,7 +540,7 @@ export function framework({
     },
     {
       name: "framework:react-transform",
-      transform(code, id) {
+      async transform(code, id) {
         const ext = id.slice(id.lastIndexOf("."));
         if (
           ![
@@ -570,7 +572,12 @@ export function framework({
 
         return clientTransform(code, id, {
           id: generateId,
-          importFrom: "@jacob-ebey/react-server-dom-vite/client",
+          importFrom:
+            this.environment.name === "client"
+              ? (browserReferences &&
+                  (await this.resolve(browserReferences))?.id) ||
+                "@jacob-ebey/react-server-dom-vite/client"
+              : "@jacob-ebey/react-server-dom-vite/client",
           importServer: "createServerReference",
         });
       },

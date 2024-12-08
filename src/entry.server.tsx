@@ -57,11 +57,6 @@ export async function handleFetch(request: Request) {
     </Document>
   );
 
-  console.log({
-    formState,
-    returnValue,
-  });
-
   const payload = {
     formState,
     returnValue,
