@@ -16,6 +16,7 @@
 	},
 	"dependencies": {
 		"@jacob-ebey/react-server-dom-vite": "19.0.0-experimental.5",
+		"@mjackson/node-fetch-server": "0.4.1",
 		"compression": "^1.7.5",
 		"express": "^4.21.2",
 		"react": "^19.0.0",
@@ -24,7 +25,6 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^1.9.4",
-		"@mjackson/node-fetch-server": "0.4.1",
 		"@playwright/test": "^1.49.0",
 		"@types/dom-navigation": "^1.0.4",
 		"@types/node": "^22.0.0",
@@ -35,5 +35,10 @@
 		"playwright": "^1.49.0",
 		"unplugin-rsc": "0.0.11",
 		"vite": "^6.0.3"
+	},
+	"pnpm": {
+		"patchedDependencies": {
+			"@mjackson/node-fetch-server": "patches/@mjackson__node-fetch-server.patch"
+		}
 	}
 }

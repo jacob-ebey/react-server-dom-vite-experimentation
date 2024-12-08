@@ -1,0 +1,24 @@
+diff --git a/dist/node-fetch-server.js b/dist/node-fetch-server.js
+index 5ae8a9663119dd7c371569ef4ef50c6d5a26ef01..68c2513ae0fe7a326febad88278c206dad5c3ace 100644
+--- a/dist/node-fetch-server.js
++++ b/dist/node-fetch-server.js
+@@ -94,9 +94,17 @@ function createHeaders(rawHeaders) {
+   return headers;
+ }
+ async function sendResponse(res, response) {
+-  let rawHeaders = [];
++  let rawHeaders = {};
+   for (let [key, value] of response.headers) {
+-    rawHeaders.push(key, value);
++    if (key in rawHeaders) {
++      if (Array.isArray(rawHeaders[key])) {
++        rawHeaders[key].push(value);
++      } else {
++        rawHeaders[key] = [rawHeaders[key], value];
++      }
++    } else {
++      rawHeaders[key] = value;
++    }
+   }
+   res.writeHead(response.status, rawHeaders);
+   if (response.body != null && res.req.method !== "HEAD") {

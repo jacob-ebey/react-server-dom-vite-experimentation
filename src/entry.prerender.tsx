@@ -2,7 +2,6 @@ import * as stream from "node:stream";
 
 // @ts-expect-error - no types
 import RSD from "@jacob-ebey/react-server-dom-vite/client";
-import { StrictMode } from "react";
 import { renderToPipeableStream } from "react-dom/server";
 import { injectRSCPayload } from "rsc-html-stream/server";
 
@@ -29,14 +28,11 @@ export async function handleFetch(request: Request) {
 		manifest,
 	);
 
-	const { abort, pipe } = renderToPipeableStream(
-		<StrictMode>{payload.root}</StrictMode>,
-		{
-			bootstrapModules,
-			// @ts-expect-error - no types yet
-			formState: payload.formState,
-		},
-	);
+	const { abort, pipe } = renderToPipeableStream(payload.root, {
+		bootstrapModules,
+		// @ts-expect-error - no types yet
+		formState: payload.formState,
+	});
 
 	request.signal.addEventListener("abort", () => abort());
 

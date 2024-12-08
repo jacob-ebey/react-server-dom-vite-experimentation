@@ -19,7 +19,6 @@ export type FrameworkEntries = {
 };
 
 export type FrameworkCallServerConfig = {
-	browser: string;
 	prerender: string;
 };
 
@@ -32,7 +31,6 @@ export type FrameworkOptions = {
 export function framework({
 	browserReferences,
 	callServer = {
-		browser: "#framework/call-server-browser",
 		prerender: "#framework/call-server-prerender",
 	},
 	entries,
@@ -532,23 +530,22 @@ export function framework({
 							);
 						}
 
+						if (this.environment.name === "client") {
+							return `
+								export * from "framework/react-manifest";
+							`;
+						}
+
 						return `
               export const bootstrapModules = ${JSON.stringify([
 								...new Set(bootstrapModules),
 							])};
 
               export * from ${JSON.stringify(
-								(
-									await this.resolve(
-										this.environment.name === "client"
-											? callServer.browser
-											: callServer.prerender,
-									)
-								)?.id ??
-									(this.environment.name === "client"
-										? callServer.browser
-										: callServer.prerender),
+								(await this.resolve(callServer.prerender))?.id ||
+									"#framework/call-server-prerender",
 							)};
+
               export * from "framework/react-manifest";
             `;
 					}
@@ -559,12 +556,6 @@ export function framework({
 
 					if (this.environment.name === "client") {
 						return `
-              export const bootstrapModules = [];
-
-              export function callServer(request) {
-                return fetch(request);
-              }
-
               export * from "framework/react-manifest";
             `;
 					}
