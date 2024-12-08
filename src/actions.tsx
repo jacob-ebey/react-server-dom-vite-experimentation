@@ -1,8 +1,12 @@
 "use server";
 
-import { context } from "./server-context.js";
+import { context, url } from "./server-context.js";
 
 export async function like() {
+  if (url().searchParams.has("error")) {
+    await Promise.reject(new Error("artificial error"));
+  }
+
   context("state", "Liked!");
 }
 
