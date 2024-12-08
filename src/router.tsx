@@ -13,6 +13,7 @@ export function Router() {
 		default:
 			return (
 				<main>
+					<title>Not Found</title>
 					<h1>Not Found</h1>
 				</main>
 			);

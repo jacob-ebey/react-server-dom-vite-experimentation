@@ -14,6 +14,7 @@ export async function Home() {
 
 	return (
 		<main>
+			<title>Home</title>
 			<h1>{context<string>("state") || "Hello World"}</h1>
 			<Suspense fallback={<p>...</p>}>
 				<p data-testid="promise-as-a-child-test">
