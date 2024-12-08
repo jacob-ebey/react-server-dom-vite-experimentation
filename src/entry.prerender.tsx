@@ -30,8 +30,8 @@ export async function handleFetch(request: Request) {
 
   const { abort, pipe } = renderToPipeableStream(payload.root, {
     bootstrapModules,
-    // TODO: Enable experimental build to test formState
-    // formState: payload.formState,
+    // @ts-expect-error - no types yet
+    formState: payload.formState,
   });
 
   request.signal.addEventListener("abort", () => abort());

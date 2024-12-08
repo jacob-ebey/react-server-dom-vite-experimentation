@@ -27,5 +27,7 @@ async function hydrateApp() {
     }
   );
 
-  hydrateRoot(document, <Shell root={payload.root} />);
+  hydrateRoot(document, <Shell root={payload.root} />, {
+    formState: payload.formState,
+  });
 }

@@ -39,6 +39,5 @@ export async function callServer(id: string, args: unknown) {
 }
 
 export function createServerReference(imp: unknown, id: string, name: string) {
-  console.log({ id, name });
   return createServerReferenceImp(`${id}#${name}`, callServer);
 }

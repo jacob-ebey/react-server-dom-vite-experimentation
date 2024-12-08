@@ -7,11 +7,7 @@ export function Document({ children }: { children: React.ReactNode }) {
         <title>Title</title>
         <link rel="stylesheet" href={globalStyles} />
       </head>
-      <body>
-        {children}
-        <hr />
-        <p>From prerender</p>
-      </body>
+      <body>{children}</body>
     </html>
   );
 }

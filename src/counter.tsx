@@ -1,26 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useActionState } from "react";
 
-import { logMessage } from "./actions.js";
-
-export function Counter() {
-  const [count, setCount] = useState(0);
+export function Counter({
+  incrementAction,
+}: {
+  incrementAction: (n: number) => Promise<number>;
+}) {
+  const [count, incrementFormAction] = useActionState(incrementAction, 0);
 
   return (
-    <div>
-      <p>Count: {count}</p>
-      <button
-        type="button"
-        onClick={() => {
-          setCount((count) => count + 1);
-          const formData = new FormData();
-          formData.append("message", `Count is now ${count + 1}`);
-          logMessage(formData);
-        }}
-      >
-        Increment
+    <form>
+      <button type="submit" formAction={incrementFormAction}>
+        Count: {count}
       </button>
-    </div>
+    </form>
   );
 }
