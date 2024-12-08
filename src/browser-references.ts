@@ -1,8 +1,8 @@
 import {
-  createFromFetch,
-  createServerReference as createServerReferenceImp,
-  encodeReply,
-  // @ts-expect-error - no types
+	createFromFetch,
+	createServerReference as createServerReferenceImp,
+	encodeReply,
+	// @ts-expect-error - no types
 } from "@jacob-ebey/react-server-dom-vite/client";
 import { startTransition } from "react";
 
@@ -12,32 +12,32 @@ import { manifest } from "framework/react-client";
 import type { ServerPayload } from "./entry.server.js";
 
 export const api: {
-  updateRoot?: React.Dispatch<React.SetStateAction<React.JSX.Element>>;
+	updateRoot?: React.Dispatch<React.SetStateAction<React.JSX.Element>>;
 } = {};
 
 export async function callServer(id: string, args: unknown) {
-  const fetchPromise = fetch(
-    new Request(window.location.href, {
-      method: "POST",
-      headers: {
-        Accept: "text/x-component",
-        "rsc-action": id,
-      },
-      body: await encodeReply(args),
-    })
-  );
+	const fetchPromise = fetch(
+		new Request(window.location.href, {
+			method: "POST",
+			headers: {
+				Accept: "text/x-component",
+				"rsc-action": id,
+			},
+			body: await encodeReply(args),
+		}),
+	);
 
-  const payload: ServerPayload = await createFromFetch(fetchPromise, manifest, {
-    callServer,
-  });
+	const payload: ServerPayload = await createFromFetch(fetchPromise, manifest, {
+		callServer,
+	});
 
-  startTransition(() => {
-    api.updateRoot?.(payload.root);
-  });
+	startTransition(() => {
+		api.updateRoot?.(payload.root);
+	});
 
-  return payload.returnValue;
+	return payload.returnValue;
 }
 
 export function createServerReference(imp: unknown, id: string, name: string) {
-  return createServerReferenceImp(`${id}#${name}`, callServer);
+	return createServerReferenceImp(`${id}#${name}`, callServer);
 }

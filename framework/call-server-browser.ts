@@ -1,3 +1,3 @@
 export function callServer(request: Request) {
-  return fetch(request);
+	return fetch(request);
 }

@@ -1,35 +1,36 @@
 {
-  "private": true,
-  "type": "module",
-  "imports": {
-    "#framework/call-server-browser": "./framework/call-server-browser.ts",
-    "#framework/call-server-prerender": "./framework/call-server-prerender.ts",
-    "#framework/references-server": "./framework/references-server.js",
-    "#framework/worker-production": "./framework/worker-production.js"
-  },
-  "scripts": {
-    "build": "vite build --app",
-    "dev": "vite dev",
-    "start": "cross-env NODE_ENV=production node ./framework/serve.js dist/prerender/entry.prerender.js dist/server/entry.server.js dist/browser"
-  },
-  "dependencies": {
-    "@jacob-ebey/react-server-dom-vite": "19.0.0-experimental.5",
-    "compression": "^1.7.5",
-    "express": "^4.21.2",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "rsc-html-stream": "^0.0.4"
-  },
-  "devDependencies": {
-    "@biomejs/biome": "^1.9.4",
-    "@mjackson/node-fetch-server": "0.4.1",
-    "@types/dom-navigation": "^1.0.4",
-    "@types/node": "^22.0.0",
-    "@types/react": "^19.0.1",
-    "@types/react-dom": "^19.0.1",
-    "@vitejs/plugin-react": "^4.3.4",
-    "cross-env": "^7.0.3",
-    "unplugin-rsc": "0.0.11",
-    "vite": "^6.0.3"
-  }
+	"private": true,
+	"type": "module",
+	"imports": {
+		"#framework/call-server-browser": "./framework/call-server-browser.ts",
+		"#framework/call-server-prerender": "./framework/call-server-prerender.ts",
+		"#framework/references-server": "./framework/references-server.js",
+		"#framework/worker-production": "./framework/worker-production.js"
+	},
+	"scripts": {
+		"build": "vite build --app",
+		"dev": "vite dev",
+		"format": "npx biome format --write",
+		"start": "cross-env NODE_ENV=production node ./framework/serve.js dist/prerender/entry.prerender.js dist/server/entry.server.js dist/browser"
+	},
+	"dependencies": {
+		"@jacob-ebey/react-server-dom-vite": "19.0.0-experimental.5",
+		"compression": "^1.7.5",
+		"express": "^4.21.2",
+		"react": "^19.0.0",
+		"react-dom": "^19.0.0",
+		"rsc-html-stream": "^0.0.4"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^1.9.4",
+		"@mjackson/node-fetch-server": "0.4.1",
+		"@types/dom-navigation": "^1.0.4",
+		"@types/node": "^22.0.0",
+		"@types/react": "^19.0.1",
+		"@types/react-dom": "^19.0.1",
+		"@vitejs/plugin-react": "^4.3.4",
+		"cross-env": "^7.0.3",
+		"unplugin-rsc": "0.0.11",
+		"vite": "^6.0.3"
+	}
 }

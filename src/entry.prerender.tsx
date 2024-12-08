@@ -11,41 +11,41 @@ import { bootstrapModules, callServer, manifest } from "framework/react-client";
 import type { ServerPayload } from "./entry.server.js";
 
 export async function handleFetch(request: Request) {
-  const serverResponse: Response = await callServer(request);
+	const serverResponse: Response = await callServer(request);
 
-  if (request.headers.get("Accept")?.match(/\btext\/x-component\b/)) {
-    return serverResponse;
-  }
+	if (request.headers.get("Accept")?.match(/\btext\/x-component\b/)) {
+		return serverResponse;
+	}
 
-  if (!serverResponse.body) {
-    throw new Error("Expected response body");
-  }
+	if (!serverResponse.body) {
+		throw new Error("Expected response body");
+	}
 
-  const [rscA, rscB] = serverResponse.body.tee();
+	const [rscA, rscB] = serverResponse.body.tee();
 
-  const payload: ServerPayload = await RSD.createFromNodeStream(
-    stream.Readable.fromWeb(rscA as any),
-    manifest
-  );
+	const payload: ServerPayload = await RSD.createFromNodeStream(
+		stream.Readable.fromWeb(rscA as any),
+		manifest,
+	);
 
-  const { abort, pipe } = renderToPipeableStream(payload.root, {
-    bootstrapModules,
-    // @ts-expect-error - no types yet
-    formState: payload.formState,
-  });
+	const { abort, pipe } = renderToPipeableStream(payload.root, {
+		bootstrapModules,
+		// @ts-expect-error - no types yet
+		formState: payload.formState,
+	});
 
-  request.signal.addEventListener("abort", () => abort());
+	request.signal.addEventListener("abort", () => abort());
 
-  const body = stream.Readable.toWeb(
-    pipe(new stream.PassThrough())
-  ) as ReadableStream<Uint8Array>;
+	const body = stream.Readable.toWeb(
+		pipe(new stream.PassThrough()),
+	) as ReadableStream<Uint8Array>;
 
-  const headers = new Headers(serverResponse.headers);
-  headers.set("Content-Type", "text/html; charset=utf-8");
+	const headers = new Headers(serverResponse.headers);
+	headers.set("Content-Type", "text/html; charset=utf-8");
 
-  return new Response(body.pipeThrough(injectRSCPayload(rscB)), {
-    headers,
-    status: serverResponse.status,
-    statusText: serverResponse.statusText,
-  });
+	return new Response(body.pipeThrough(injectRSCPayload(rscB)), {
+		headers,
+		status: serverResponse.status,
+		statusText: serverResponse.statusText,
+	});
 }
