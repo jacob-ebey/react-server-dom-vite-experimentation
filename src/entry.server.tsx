@@ -2,6 +2,7 @@ import * as stream from "node:stream";
 
 // @ts-expect-error - no types
 import RSD from "@jacob-ebey/react-server-dom-vite/server";
+import { StrictMode } from "react";
 import type { ReactFormState } from "react-dom/client";
 
 // @ts-expect-error - virtual module with no types
@@ -66,9 +67,11 @@ export async function handleFetch(request: Request) {
 			}
 
 			const root = (
-				<Document>
-					<Router />
-				</Document>
+				<StrictMode>
+					<Document>
+						<Router />
+					</Document>
+				</StrictMode>
 			);
 
 			const payload = {

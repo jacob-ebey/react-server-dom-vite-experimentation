@@ -5,7 +5,7 @@ import * as path from "node:path";
 import { createRequestListener } from "@mjackson/node-fetch-server";
 import react from "@vitejs/plugin-react";
 import { clientTransform, serverTransform } from "unplugin-rsc";
-import type * as vite from "vite";
+import * as vite from "vite";
 
 import {
 	type FetchableDevEnvironment,
@@ -96,6 +96,23 @@ export function framework({
 									builder.environments.server,
 								)) as vite.Rollup.RollupOutput;
 
+								const clientModuleFilenames = clientModules.keys();
+								builder.environments.client.config.build.rollupOptions.input = [
+									...new Set([
+										...((builder.environments.client.config.build.rollupOptions
+											.input as string[]) ?? []),
+										...clientModuleFilenames,
+									]),
+								];
+								builder.environments.prerender.config.build.rollupOptions.input =
+									[
+										...new Set([
+											...((builder.environments.prerender.config.build
+												.rollupOptions.input as string[]) ?? []),
+											...clientModuleFilenames,
+										]),
+									];
+
 								const [_browserOutput, _prerenderOutput] = await Promise.all([
 									builder.build(builder.environments.client),
 									builder.build(builder.environments.prerender),
@@ -157,8 +174,11 @@ export function framework({
 							consumer: "client",
 							build: {
 								outDir: "dist/browser",
+								manifest: true,
+								ssrManifest: true,
 								rollupOptions: {
-									input: entries.browser,
+									preserveEntrySignatures: "exports-only",
+									input: [entries.browser],
 								},
 							},
 						},
@@ -169,7 +189,7 @@ export function framework({
 								emitAssets: true,
 								ssrManifest: true,
 								rollupOptions: {
-									input: entries.prerender,
+									input: [entries.prerender],
 								},
 							},
 							dev: {
@@ -183,7 +203,7 @@ export function framework({
 								emitAssets: true,
 								ssrManifest: true,
 								rollupOptions: {
-									input: entries.server,
+									input: [entries.server],
 								},
 							},
 							dev: {
@@ -253,6 +273,7 @@ export function framework({
                 };
               `;
 						}
+
 						return `
               export const manifest = {
                 resolveClientReferenceMetadata(clientReference) {
@@ -293,6 +314,45 @@ export function framework({
             `;
 					}
 
+					if (this.environment.name === "client") {
+						return `
+              export const manifest = {
+                resolveClientReference([id, name, ...chunks]) {
+                  let modPromise;
+                  return {
+                    preload: async () => {
+                      if (modPromise) {
+                        return modPromise;
+                      }
+
+											for (const chunk of chunks) {
+												import(/* @vite-ignore */ chunk);
+											}
+
+                      modPromise = import(/* @vite-ignore */ chunks[0]);
+                      return modPromise
+                        .then((mod) => {
+                          modPromise.mod = mod;
+                        })
+                        .catch((error) => {
+                          modPromise.error = error;
+                        });
+                    },
+                    get: () => {
+                      if (!modPromise) {
+                        throw new Error(\`Module "\${id}" not preloaded\`);
+                      }
+                      if ("error" in modPromise) {
+                        throw modPromise.error;
+                      }
+                      return modPromise.mod[name];
+                    },
+                  };
+                },
+              };
+            `;
+					}
+
 					if (this.environment.name !== "server") {
 						return `
               const clientModules = {
@@ -306,7 +366,7 @@ export function framework({
               };
 
               export const manifest = {
-                resolveClientReference([id, name]) {
+                resolveClientReference([id, name, ...chunks]) {
                   let modPromise;
                   return {
                     preload: async () => {
@@ -338,6 +398,21 @@ export function framework({
             `;
 					}
 
+					const ssrManifestAsset = browserOutput?.output.find(
+						(asset) => asset.fileName === ".vite/ssr-manifest.json",
+					);
+					const ssrManifestSource =
+						ssrManifestAsset?.type === "asset" &&
+						(ssrManifestAsset.source as string);
+					const ssrManifest = JSON.parse(ssrManifestSource || "{}");
+
+					const manifestAsset = browserOutput?.output.find(
+						(asset) => asset.fileName === ".vite/manifest.json",
+					);
+					const manifestSource =
+						manifestAsset?.type === "asset" && (manifestAsset.source as string);
+					const manifest = JSON.parse(manifestSource || "{}");
+
 					return `
             const serverModules = {
               ${Array.from(serverModules)
@@ -348,11 +423,25 @@ export function framework({
 								})
 								.join("  \n")}
             };
+
+						const referenceChunks = {
+							${Array.from(clientModules)
+								.map(([filename, hash]) => {
+									const relative = vite.normalizePath(
+										path.relative(
+											path.resolve(this.environment.config.root),
+											filename,
+										),
+									);
+									return `${JSON.stringify(hash)}: ${JSON.stringify([`${this.environment.config.base}${manifest[relative].file}`, ...(ssrManifest[relative] ?? [])])},`;
+								})
+								.join("  \n")}
+						};
             
             export const manifest = {
               resolveClientReferenceMetadata(clientReference) {
                 const split = clientReference.$$id.split("#");
-                return [split[0], split.slice(1).join("#")];
+                return [split[0], split.slice(1).join("#"), ...(referenceChunks[split[0]] || [])];
               },
               resolveServerReference(serverReference) {
                 const [id, ...rest] = serverReference.split("#");

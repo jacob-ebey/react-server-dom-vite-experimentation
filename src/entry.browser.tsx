@@ -3,7 +3,7 @@ import {
 	createFromReadableStream,
 	// @ts-expect-error - no types
 } from "@jacob-ebey/react-server-dom-vite/client";
-import { startTransition, useState } from "react";
+import { startTransition, StrictMode, useState } from "react";
 import { hydrateRoot } from "react-dom/client";
 import { rscStream } from "rsc-html-stream/client";
 
@@ -28,9 +28,15 @@ async function hydrateApp() {
 		{ callServer },
 	);
 
-	hydrateRoot(document, <Shell root={payload.root} />, {
-		formState: payload.formState,
-	});
+	hydrateRoot(
+		document,
+		<StrictMode>
+			<Shell root={payload.root} />
+		</StrictMode>,
+		{
+			formState: payload.formState,
+		},
+	);
 
 	window.navigation?.addEventListener("navigate", (event) => {
 		if (
