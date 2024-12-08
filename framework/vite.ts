@@ -148,15 +148,17 @@ export function framework({
 								const processed = new Set<string>();
 								for (const assets of Object.values(manifest) as string[][]) {
 									for (const asset of assets) {
-										if (asset.endsWith(".js") || processed.has(asset)) continue;
-										processed.add(asset);
+										const fullPath = path.join(outDir, asset.slice(1));
 
-										const relative = path.relative(
-											outDir,
-											path.join(outDir, asset.slice(1)),
-										);
+										if (asset.endsWith(".js") || processed.has(fullPath))
+											continue;
+										processed.add(fullPath);
+
+										if (!fs.existsSync(fullPath)) continue;
+
+										const relative = path.relative(outDir, fullPath);
 										fs.renameSync(
-											path.join(outDir, asset.slice(1)),
+											fullPath,
 											path.join(
 												builder.environments.client.config.build.outDir,
 												relative,
@@ -433,7 +435,7 @@ export function framework({
 											filename,
 										),
 									);
-									return `${JSON.stringify(hash)}: ${JSON.stringify([`${this.environment.config.base}${manifest[relative].file}`, ...(ssrManifest[relative] ?? [])])},`;
+									return `${JSON.stringify(hash)}: ${JSON.stringify(collectChunks(this.environment.config.base, relative, manifest))},`;
 								})
 								.join("  \n")}
 						};
@@ -510,22 +512,30 @@ export function framework({
 					if (env.command === "build") {
 						const bootstrapModules: string[] = [];
 						if (browserOutput) {
-							const browserAsset = browserOutput.output.find(
-								(asset) =>
-									asset.type === "chunk" &&
-									asset.facadeModuleId === browserEntry.id,
+							const manifestAsset = browserOutput?.output.find(
+								(asset) => asset.fileName === ".vite/manifest.json",
 							);
-							if (browserAsset?.type === "chunk") {
-								bootstrapModules.push(
-									this.environment.config.base + browserAsset.fileName,
-								);
-							}
+							const manifestSource =
+								manifestAsset?.type === "asset" &&
+								(manifestAsset.source as string);
+							const manifest = JSON.parse(manifestSource || "{}");
+
+							bootstrapModules.push(
+								...collectChunks(
+									this.environment.config.base,
+									path.relative(
+										path.resolve(this.environment.config.root),
+										browserEntry.id,
+									),
+									manifest,
+								),
+							);
 						}
 
 						return `
-              export const bootstrapModules = ${JSON.stringify(
-								bootstrapModules,
-							)};
+              export const bootstrapModules = ${JSON.stringify([
+								...new Set(bootstrapModules),
+							])};
 
               export * from ${JSON.stringify(
 								(
@@ -704,4 +714,20 @@ export function framework({
 			},
 		},
 	];
+}
+
+function collectChunks(
+	base: string,
+	forFilename: string,
+	manifest: Record<string, { file: string; imports: string[] }>,
+	collected: Set<string> = new Set(),
+) {
+	if (manifest[forFilename]) {
+		collected.add(base + manifest[forFilename].file);
+		for (const imp of manifest[forFilename].imports ?? []) {
+			collectChunks(base, imp, manifest, collected);
+		}
+	}
+
+	return Array.from(collected);
 }
