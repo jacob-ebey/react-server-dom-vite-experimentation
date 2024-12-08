@@ -3,6 +3,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 
 import { createRequestListener } from "@mjackson/node-fetch-server";
+import react from "@vitejs/plugin-react";
 import { clientTransform, serverTransform } from "unplugin-rsc";
 import type * as vite from "vite";
 
@@ -70,6 +71,7 @@ export function framework({
   }
 
   return [
+    react(),
     {
       name: "framework:config",
       enforce: "pre",
@@ -194,6 +196,17 @@ export function framework({
             },
           },
         };
+      },
+      async transform(code, id) {
+        if (
+          env.command === "serve" &&
+          id === (await this.resolve(entries.browser))?.id
+        ) {
+          return `${react.preambleCode.replace(
+            "__BASE__",
+            this.environment.config.base
+          )};${code}`;
+        }
       },
     },
     {
