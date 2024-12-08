@@ -10,6 +10,7 @@ import { Document } from "./document.js";
 import { Counter } from "./counter.js";
 
 export type ServerPayload = {
+  returnValue?: unknown;
   root: React.JSX.Element;
 };
 

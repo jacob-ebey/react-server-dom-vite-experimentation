@@ -1,6 +1,10 @@
-// @ts-expect-error - no types
-import { createFromReadableStream } from "@jacob-ebey/react-server-dom-vite/client";
-import { useState } from "react";
+import {
+  createFromFetch,
+  createFromReadableStream,
+  encodeReply,
+  // @ts-expect-error - no types
+} from "@jacob-ebey/react-server-dom-vite/client";
+import { startTransition, useState } from "react";
 import { hydrateRoot } from "react-dom/client";
 import { rscStream } from "rsc-html-stream/client";
 
@@ -18,10 +22,36 @@ function Shell(props: { root: React.JSX.Element }) {
   return root;
 }
 
+async function callServer(id: string, args: unknown) {
+  const fetchPromise = fetch(
+    new Request(window.location.href, {
+      method: "POST",
+      headers: {
+        Accept: "text/x-component",
+        "rsc-action": id,
+      },
+      body: await encodeReply(args),
+    })
+  );
+
+  const payload: ServerPayload = await createFromFetch(fetchPromise, manifest, {
+    callServer,
+  });
+
+  startTransition(() => {
+    updateRoot(payload.root);
+  });
+
+  return payload.returnValue;
+}
+
 async function hydrateApp() {
   const payload: ServerPayload = await createFromReadableStream(
     rscStream,
-    manifest
+    manifest,
+    {
+      callServer,
+    }
   );
 
   hydrateRoot(document, <Shell root={payload.root} />);

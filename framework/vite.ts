@@ -1,4 +1,6 @@
 import * as crypto from "node:crypto";
+import * as fs from "node:fs";
+import * as path from "node:path";
 
 import { createRequestListener } from "@mjackson/node-fetch-server";
 import { clientTransform, serverTransform } from "unplugin-rsc";
@@ -70,15 +72,21 @@ export function framework({
             async buildApp(builder) {
               let needsRebuild = true;
               let isFirstBuild = true;
+              let prerenderOutput!: vite.Rollup.RollupOutput;
+              let serverOutput!: vite.Rollup.RollupOutput;
+
               while (needsRebuild) {
                 needsRebuild = false;
                 const lastClientModulesCount = clientModules.size;
-                await builder.build(builder.environments.server);
-                const [_browserOutput] = await Promise.all([
-                  builder.build(builder.environments.browser),
+                serverOutput = (await builder.build(
+                  builder.environments.server
+                )) as vite.Rollup.RollupOutput;
+                const [_browserOutput, _prerenderOutput] = await Promise.all([
+                  builder.build(builder.environments.client),
                   builder.build(builder.environments.prerender),
                 ]);
                 browserOutput = _browserOutput as vite.Rollup.RollupOutput;
+                prerenderOutput = _prerenderOutput as vite.Rollup.RollupOutput;
                 if (
                   isFirstBuild ||
                   lastClientModulesCount !== clientModules.size
@@ -87,16 +95,55 @@ export function framework({
                 }
                 isFirstBuild = false;
               }
+
+              for (const [output, outDir, assetsDir] of [
+                [
+                  prerenderOutput,
+                  builder.environments.prerender.config.build.outDir,
+                  builder.environments.prerender.config.build.assetsDir,
+                ],
+                [
+                  serverOutput,
+                  builder.environments.server.config.build.outDir,
+                  builder.environments.server.config.build.assetsDir,
+                ],
+              ] as const) {
+                const manifestAsset = output.output.find(
+                  (asset) => asset.fileName === ".vite/ssr-manifest.json"
+                );
+                if (!manifestAsset || manifestAsset.type !== "asset")
+                  throw new Error("could not find manifest");
+                const manifest = JSON.parse(manifestAsset.source as string);
+
+                const processed = new Set<string>();
+                for (const assets of Object.values(manifest) as string[][]) {
+                  for (const asset of assets) {
+                    if (asset.endsWith(".js") || processed.has(asset)) continue;
+                    processed.add(asset);
+
+                    const relative = path.relative(
+                      outDir,
+                      path.join(outDir, asset.slice(1))
+                    );
+                    fs.renameSync(
+                      path.join(outDir, asset.slice(1)),
+                      path.join(
+                        builder.environments.client.config.build.outDir,
+                        relative
+                      )
+                    );
+                  }
+                }
+              }
             },
             sharedConfigBuild: true,
             sharedPlugins: true,
           },
           environments: {
-            browser: {
+            client: {
               consumer: "client",
               build: {
                 outDir: "dist/browser",
-                manifest: true,
                 rollupOptions: {
                   input: entries.browser,
                 },
@@ -106,6 +153,8 @@ export function framework({
               consumer: "server",
               build: {
                 outDir: "dist/prerender",
+                emitAssets: true,
+                ssrManifest: true,
                 rollupOptions: {
                   input: entries.prerender,
                 },
@@ -118,6 +167,8 @@ export function framework({
               consumer: "server",
               build: {
                 outDir: "dist/server",
+                emitAssets: true,
+                ssrManifest: true,
                 rollupOptions: {
                   input: entries.server,
                 },
@@ -296,12 +347,12 @@ export function framework({
               export * from ${JSON.stringify(
                 (
                   await this.resolve(
-                    this.environment.name === "browser"
+                    this.environment.name === "client"
                       ? callServer.browser
                       : callServer.prerender
                   )
                 )?.id ??
-                  (this.environment.name === "browser"
+                  (this.environment.name === "client"
                     ? callServer.browser
                     : callServer.prerender)
               )};
@@ -311,6 +362,18 @@ export function framework({
 
           if (!devServerURL) {
             throw new Error("could not resolve dev server URL");
+          }
+
+          if (this.environment.name === "client") {
+            return `
+              export const bootstrapModules = [];
+
+              export function callServer(request) {
+                return fetch(request);
+              }
+
+              export * from "framework/react-manifest";
+            `;
           }
 
           return `

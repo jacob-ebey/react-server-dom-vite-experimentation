@@ -11,7 +11,7 @@
   "scripts": {
     "build": "vite build --app",
     "dev": "vite dev",
-    "start": "node ./framework/serve.js dist/prerender/entry.prerender.js dist/server/entry.server.js dist/browser"
+    "start": "cross-env NODE_ENV=production node ./framework/serve.js dist/prerender/entry.prerender.js dist/server/entry.server.js dist/browser"
   },
   "dependencies": {
     "@jacob-ebey/react-server-dom-vite": "19.0.0-experimental.5",
@@ -27,6 +27,7 @@
     "@types/node": "^22.0.0",
     "@types/react": "^19.0.1",
     "@types/react-dom": "^19.0.1",
+    "cross-env": "^7.0.3",
     "unplugin-rsc": "0.0.11",
     "vite": "^6.0.3"
   }
