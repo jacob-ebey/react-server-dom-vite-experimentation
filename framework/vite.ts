@@ -34,6 +34,7 @@ export function framework({
 }: FrameworkOptions): vite.PluginOption {
   let env: vite.ConfigEnv;
   let devServerURL: URL | undefined;
+  let browserOutput: vite.Rollup.RollupOutput | undefined;
   const clientModules = new Map<string, string>();
 
   function generateId(
@@ -68,25 +69,34 @@ export function framework({
           builder: {
             async buildApp(builder) {
               let needsRebuild = true;
+              let isFirstBuild = true;
               while (needsRebuild) {
                 needsRebuild = false;
                 const lastClientModulesCount = clientModules.size;
                 await builder.build(builder.environments.server);
-                await Promise.all([
+                const [_browserOutput] = await Promise.all([
                   builder.build(builder.environments.browser),
                   builder.build(builder.environments.prerender),
                 ]);
-                if (lastClientModulesCount !== clientModules.size) {
+                browserOutput = _browserOutput as vite.Rollup.RollupOutput;
+                if (
+                  isFirstBuild ||
+                  lastClientModulesCount !== clientModules.size
+                ) {
                   needsRebuild = true;
                 }
+                isFirstBuild = false;
               }
             },
+            sharedConfigBuild: true,
+            sharedPlugins: true,
           },
           environments: {
             browser: {
               consumer: "client",
               build: {
                 outDir: "dist/browser",
+                manifest: true,
                 rollupOptions: {
                   input: entries.browser,
                 },
@@ -133,13 +143,118 @@ export function framework({
       },
       load(id) {
         if (id === "\0virtual:framework/react-manifest") {
+          if (env.command === "serve") {
+            if (this.environment.name !== "server") {
+              return `
+                export const manifest = {
+                  resolveClientReference([id, name]) {
+                    let modPromise;
+                    return {
+                      preload: async () => {
+                        if (modPromise) {
+                          return modPromise;
+                        }
+
+                        modPromise = import(/* @vite-ignore */ id);
+                        return modPromise
+                          .then((mod) => {
+                            modPromise.mod = mod;
+                          })
+                          .catch((error) => {
+                            modPromise.error = error;
+                          });
+                      },
+                      get: () => {
+                        if (!modPromise) {
+                          throw new Error(\`Module "\${id}" not preloaded\`);
+                        }
+                        if ("error" in modPromise) {
+                          throw modPromise.error;
+                        }
+                        return modPromise.mod[name];
+                      },
+                    };
+                  },
+                };
+              `;
+            }
+            return `
+              export const manifest = {
+                resolveClientReferenceMetadata(clientReference) {
+                  const split = clientReference.$$id.split("#");
+                  return [split[0], split.slice(1).join("#")];
+                },
+              };
+            `;
+          }
+
+          if (this.environment.name !== "server") {
+            return `
+              const clientModules = {
+                ${Array.from(clientModules)
+                  .map(([filename, hash]) => {
+                    return `${JSON.stringify(
+                      hash
+                    )}: () => import(${JSON.stringify(filename)}),`;
+                  })
+                  .join("  \n")}
+              };
+
+              export const manifest = {
+                resolveClientReference([id, name]) {
+                  let modPromise;
+                  return {
+                    preload: async () => {
+                      if (modPromise) {
+                        return modPromise;
+                      }
+
+                      modPromise = clientModules[id]();
+                      return modPromise
+                        .then((mod) => {
+                          modPromise.mod = mod;
+                        })
+                        .catch((error) => {
+                          modPromise.error = error;
+                        });
+                    },
+                    get: () => {
+                      if (!modPromise) {
+                        throw new Error(\`Module "\${id}" not preloaded\`);
+                      }
+                      if ("error" in modPromise) {
+                        throw modPromise.error;
+                      }
+                      return modPromise.mod[name];
+                    },
+                  };
+                },
+              };
+            `;
+          }
+
           return `
             export const manifest = {
-              resolveClientReference: async ([id, name]) => {
-                const mod = await import(/* @vite-ignore */ id);
-                return mod[name];
+              resolveClientReferenceMetadata(clientReference) {
+                const split = clientReference.$$id.split("#");
+                return [split[0], split.slice(1).join("#")];
               },
             };
+          `;
+        }
+      },
+    },
+    {
+      name: "framework:virtual-react-server",
+      resolveId(id) {
+        if (id === "framework/react-server") {
+          return "\0virtual:framework/react-server";
+        }
+      },
+      async load(id) {
+        if (id === "\0virtual:framework/react-server") {
+          return `
+            export * from "framework/react-manifest";
           `;
         }
       },
@@ -153,8 +268,31 @@ export function framework({
       },
       async load(id) {
         if (id === "\0virtual:framework/react-client") {
+          const browserEntry = await this.resolve(entries.browser);
+          if (!browserEntry) {
+            throw new Error("could not resolve browser entry");
+          }
+
           if (env.command === "build") {
+            const bootstrapModules: string[] = [];
+            if (browserOutput) {
+              const browserAsset = browserOutput.output.find(
+                (asset) =>
+                  asset.type === "chunk" &&
+                  asset.facadeModuleId === browserEntry.id
+              );
+              if (browserAsset?.type === "chunk") {
+                bootstrapModules.push(
+                  this.environment.config.base + browserAsset.fileName
+                );
+              }
+            }
+
             return `
+              export const bootstrapModules = ${JSON.stringify(
+                bootstrapModules
+              )};
+
               export * from ${JSON.stringify(
                 (
                   await this.resolve(
@@ -167,15 +305,19 @@ export function framework({
                     ? callServer.browser
                     : callServer.prerender)
               )};
-              export * as manifest from "framework/react-manifest";
+              export * from "framework/react-manifest";
             `;
           }
 
           if (!devServerURL) {
-            throw new Error("expected devServerURL to be set");
+            throw new Error("could not resolve dev server URL");
           }
 
           return `
+            export const bootstrapModules = ${JSON.stringify([
+              browserEntry.id,
+            ])};
+
             const devServerURL = ${JSON.stringify(devServerURL.href)};
             
             export function callServer(request) {
@@ -195,36 +337,7 @@ export function framework({
               );
             }
 
-            export const manifest = {
-              resolveClientReference([id, name]) {
-                let modPromise;
-                return {
-                  preload: async () => {
-                    if (modPromise) {
-                      return modPromise;
-                    }
-
-                    modPromise = import(/* @vite-ignore */ id);
-                    return modPromise
-                      .then((mod) => {
-                        modPromise.mod = mod;
-                      })
-                      .catch((error) => {
-                        modPromise.error = error;
-                      });
-                  },
-                  get: () => {
-                    if (!modPromise) {
-                      throw new Error(\`Module "\${id}" not preloaded\`);
-                    }
-                    if ("error" in modPromise) {
-                      throw modPromise.error;
-                    }
-                    return modPromise.mod[name];
-                  },
-                };
-              },
-            };
+            export * from "framework/react-manifest";
           `;
         }
       },
@@ -284,6 +397,26 @@ export function framework({
     {
       name: "framework:react-transform",
       transform(code, id) {
+        const ext = id.slice(id.lastIndexOf("."));
+        if (
+          ![
+            ".js",
+            ".jsx",
+            ".cjs",
+            ".cjsx",
+            ".mjs",
+            ".mjsx",
+            ".ts",
+            ".tsx",
+            ".cts",
+            ".ctsx",
+            ".mts",
+            ".mtsx",
+          ].includes(ext)
+        ) {
+          return;
+        }
+
         if (this.environment.name === "server") {
           return serverTransform(code, id, {
             id: generateId,

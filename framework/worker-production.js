@@ -4,7 +4,6 @@ import { handleFetch } from "./worker-shared.js";
 
 const options = JSON.parse(process.env.WORKER_ENVIRONMENT);
 
-console.log({ options });
 const mod = await import(options.entry);
 const fetchFunction =
   mod.fetch ??

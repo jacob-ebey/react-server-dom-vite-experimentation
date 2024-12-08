@@ -6,9 +6,9 @@ import { renderToPipeableStream } from "react-dom/server";
 import { injectRSCPayload } from "rsc-html-stream/server";
 
 // @ts-expect-error - virtual module with no types
-import { callServer, manifest } from "framework/react-client";
+import { bootstrapModules, callServer, manifest } from "framework/react-client";
 
-import { Document } from "./document.js";
+import type { ServerPayload } from "./entry.server.js";
 
 export async function handleFetch(request: Request) {
   const serverResponse: Response = await callServer(request);
@@ -18,13 +18,14 @@ export async function handleFetch(request: Request) {
   }
 
   const [rscA, rscB] = serverResponse.body.tee();
-  const node = await RSD.createFromNodeStream(
+
+  const payload: ServerPayload = await RSD.createFromNodeStream(
     stream.Readable.fromWeb(rscA as any),
     manifest
   );
 
-  const { abort, pipe } = renderToPipeableStream(<Document>{node}</Document>, {
-    bootstrapModules: ["/src/entry.browser.tsx"],
+  const { abort, pipe } = renderToPipeableStream(payload.root, {
+    bootstrapModules,
   });
 
   request.signal.addEventListener("abort", () => abort());

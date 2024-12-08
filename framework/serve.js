@@ -2,10 +2,13 @@ import * as path from "node:path";
 import { pathToFileURL } from "node:url";
 
 import { createRequestListener } from "@mjackson/node-fetch-server";
+import compression from "compression";
 import express from "express";
 
 const app = express();
 app.disable("x-powered-by");
+
+app.use(compression());
 
 const entry = pathToFileURL(path.resolve(process.cwd(), process.argv[2])).href;
 const mod = await import(entry);

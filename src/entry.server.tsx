@@ -3,27 +3,27 @@ import * as stream from "node:stream";
 // @ts-expect-error - no types
 import RSD from "@jacob-ebey/react-server-dom-vite/server";
 
+// @ts-expect-error - virtual module with no types
+import { manifest } from "framework/react-server";
+
+import { Document } from "./document.js";
 import { Counter } from "./counter.js";
 
-const manifest = {
-  resolveClientReferenceMetadata(clientReference: { $$id: string }) {
-    if (import.meta.env.DEV) {
-      const split = clientReference.$$id.split("#");
-      return [split[0], split.slice(1).join("#")];
-    }
-
-    throw new Error("client references are not yet implemented for production");
-  },
+export type ServerPayload = {
+  root: React.JSX.Element;
 };
 
 export function handleFetch(request: Request) {
-  const { abort, pipe } = RSD.renderToPipeableStream(
-    <>
+  const root = (
+    <Document>
       <h1>Hello, server!</h1>
       <Counter />
-    </>,
-    manifest
+    </Document>
   );
+
+  const payload = { root } satisfies ServerPayload;
+
+  const { abort, pipe } = RSD.renderToPipeableStream(payload, manifest);
 
   request.signal.addEventListener("abort", () => abort());
 
