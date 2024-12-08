@@ -1,3 +1,4 @@
+import { About } from "./about.js";
 import { Home } from "./home.js";
 import { url } from "./server-context.js";
 
@@ -7,6 +8,8 @@ export function Router() {
   switch (pathname) {
     case "/":
       return <Home />;
+    case "/about":
+      return <About />;
     default:
       return (
         <main>

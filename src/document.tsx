@@ -7,7 +7,19 @@ export function Document({ children }: { children: React.ReactNode }) {
         <title>Title</title>
         <link rel="stylesheet" href={globalStyles} />
       </head>
-      <body>{children}</body>
+      <body>
+        <nav>
+          <ul>
+            <li>
+              <a href="/">Home</a>
+            </li>
+            <li>
+              <a href="/about">About</a>
+            </li>
+          </ul>
+        </nav>
+        {children}
+      </body>
     </html>
   );
 }

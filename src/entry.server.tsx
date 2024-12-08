@@ -85,7 +85,11 @@ export async function handleFetch(request: Request) {
         pipe(new stream.PassThrough())
       ) as ReadableStream<Uint8Array>;
 
-      return new Response(body);
+      return new Response(body, {
+        headers: {
+          "Content-Type": "text/x-component",
+        },
+      });
     }
   );
 }

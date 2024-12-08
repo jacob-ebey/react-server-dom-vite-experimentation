@@ -40,9 +40,12 @@ export async function handleFetch(request: Request) {
     pipe(new stream.PassThrough())
   ) as ReadableStream<Uint8Array>;
 
+  const headers = new Headers(serverResponse.headers);
+  headers.set("Content-Type", "text/html; charset=utf-8");
+
   return new Response(body.pipeThrough(injectRSCPayload(rscB)), {
+    headers,
     status: serverResponse.status,
     statusText: serverResponse.statusText,
-    headers: serverResponse.headers,
   });
 }

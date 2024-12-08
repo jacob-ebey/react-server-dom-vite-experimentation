@@ -15,10 +15,10 @@ export async function Home() {
   return (
     <main>
       <h1>{context<string>("state") || "Hello World"}</h1>
-      <Suspense fallback={null}>
-        <div data-testid="promise-as-a-child-test">
+      <Suspense fallback={<p>...</p>}>
+        <p data-testid="promise-as-a-child-test">
           Promise as a child hydrates without errors: {promisedText}
-        </div>
+        </p>
       </Suspense>
       <Counter incrementAction={increment} />
       <form action={logMessage}>

@@ -1,6 +1,9 @@
-// @ts-expect-error - no types
-import { createFromReadableStream } from "@jacob-ebey/react-server-dom-vite/client";
-import { useState } from "react";
+import {
+  createFromFetch,
+  createFromReadableStream,
+  // @ts-expect-error - no types
+} from "@jacob-ebey/react-server-dom-vite/client";
+import { startTransition, useState } from "react";
 import { hydrateRoot } from "react-dom/client";
 import { rscStream } from "rsc-html-stream/client";
 
@@ -22,12 +25,54 @@ async function hydrateApp() {
   const payload: ServerPayload = await createFromReadableStream(
     rscStream,
     manifest,
-    {
-      callServer,
-    }
+    { callServer }
   );
 
   hydrateRoot(document, <Shell root={payload.root} />, {
     formState: payload.formState,
+  });
+
+  window.navigation?.addEventListener("navigate", (event) => {
+    if (
+      !event.canIntercept ||
+      event.defaultPrevented ||
+      event.downloadRequest ||
+      !event.userInitiated ||
+      event.navigationType === "reload"
+    ) {
+      return;
+    }
+
+    event.intercept({
+      focusReset: "after-transition",
+      scroll: "after-transition",
+      async handler() {
+        const abortController = new AbortController();
+        let startedTransition = false;
+        event.signal.addEventListener("abort", () => {
+          if (startedTransition) return;
+          abortController.abort();
+        });
+        const fetchPromise = fetch(event.destination.url, {
+          body: event.formData,
+          headers: {
+            Accept: "text/x-component",
+          },
+          method: event.formData ? "POST" : "GET",
+          signal: abortController.signal,
+        });
+
+        const payload: ServerPayload = await createFromFetch(
+          fetchPromise,
+          manifest,
+          { callServer }
+        );
+
+        startedTransition = true;
+        startTransition(() => {
+          api.updateRoot?.(payload.root);
+        });
+      },
+    });
   });
 }
