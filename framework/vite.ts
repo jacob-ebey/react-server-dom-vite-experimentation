@@ -38,23 +38,30 @@ export function framework({
   let devServerURL: URL | undefined;
   let browserOutput: vite.Rollup.RollupOutput | undefined;
   const clientModules = new Map<string, string>();
+  const serverModules = new Map<string, string>();
 
   function generateId(
     filename: string,
     directive: "use client" | "use server"
   ) {
-    if (directive === "use server") {
-      throw new Error("server actions are not yet implemented");
-    }
-
     if (env.command === "build") {
       const hash = crypto
         .createHash("sha256")
         .update(filename)
         .digest("hex")
         .slice(0, 8);
+
+      if (directive === "use server") {
+        serverModules.set(filename, hash);
+        return hash;
+      }
+
       clientModules.set(filename, hash);
       return hash;
+    }
+
+    if (directive === "use server") {
+      return filename;
     }
 
     return filename;
@@ -77,36 +84,38 @@ export function framework({
 
               while (needsRebuild) {
                 needsRebuild = false;
+
                 const lastClientModulesCount = clientModules.size;
+                const lastServerModulesCount = serverModules.size;
+
                 serverOutput = (await builder.build(
                   builder.environments.server
                 )) as vite.Rollup.RollupOutput;
+
                 const [_browserOutput, _prerenderOutput] = await Promise.all([
                   builder.build(builder.environments.client),
                   builder.build(builder.environments.prerender),
                 ]);
                 browserOutput = _browserOutput as vite.Rollup.RollupOutput;
                 prerenderOutput = _prerenderOutput as vite.Rollup.RollupOutput;
+
                 if (
-                  isFirstBuild ||
-                  lastClientModulesCount !== clientModules.size
+                  (isFirstBuild &&
+                    (clientModules.size || serverModules.size)) ||
+                  lastClientModulesCount !== clientModules.size ||
+                  lastServerModulesCount !== serverModules.size
                 ) {
                   needsRebuild = true;
                 }
                 isFirstBuild = false;
               }
 
-              for (const [output, outDir, assetsDir] of [
+              for (const [output, outDir] of [
                 [
                   prerenderOutput,
                   builder.environments.prerender.config.build.outDir,
-                  builder.environments.prerender.config.build.assetsDir,
                 ],
-                [
-                  serverOutput,
-                  builder.environments.server.config.build.outDir,
-                  builder.environments.server.config.build.assetsDir,
-                ],
+                [serverOutput, builder.environments.server.config.build.outDir],
               ] as const) {
                 const manifestAsset = output.output.find(
                   (asset) => asset.fileName === ".vite/ssr-manifest.json"
@@ -235,6 +244,36 @@ export function framework({
                   const split = clientReference.$$id.split("#");
                   return [split[0], split.slice(1).join("#")];
                 },
+                resolveServerReference(serverReference) {
+                  const [id, ...rest] = serverReference.split("#");
+                  const name = rest.join("#");
+                  let modPromise;
+                  return {
+                    preload: async () => {
+                      if (modPromise) {
+                        return modPromise;
+                      }
+
+                      modPromise = import(/* @vite-ignore */ id);
+                      return modPromise
+                        .then((mod) => {
+                          modPromise.mod = mod;
+                        })
+                        .catch((error) => {
+                          modPromise.error = error;
+                        });
+                    },
+                    get: () => {
+                      if (!modPromise) {
+                        throw new Error(\`Module "\${id}" not preloaded\`);
+                      }
+                      if ("error" in modPromise) {
+                        throw modPromise.error;
+                      }
+                      return modPromise.mod[name];
+                    },
+                  };
+                },
               };
             `;
           }
@@ -285,10 +324,50 @@ export function framework({
           }
 
           return `
+            const serverModules = {
+              ${Array.from(serverModules)
+                .map(([filename, hash]) => {
+                  return `${JSON.stringify(
+                    hash
+                  )}: () => import(${JSON.stringify(filename)}),`;
+                })
+                .join("  \n")}
+            };
+            
             export const manifest = {
               resolveClientReferenceMetadata(clientReference) {
                 const split = clientReference.$$id.split("#");
                 return [split[0], split.slice(1).join("#")];
+              },
+              resolveServerReference(serverReference) {
+                const [id, ...rest] = serverReference.split("#");
+                const name = rest.join("#");
+                let modPromise;
+                return {
+                  preload: async () => {
+                    if (modPromise) {
+                      return modPromise;
+                    }
+
+                    modPromise = serverModules[id]();
+                    return modPromise
+                      .then((mod) => {
+                        modPromise.mod = mod;
+                      })
+                      .catch((error) => {
+                        modPromise.error = error;
+                      });
+                  },
+                  get: () => {
+                    if (!modPromise) {
+                      throw new Error(\`Module "\${id}" not preloaded\`);
+                    }
+                    if ("error" in modPromise) {
+                      throw modPromise.error;
+                    }
+                    return modPromise.mod[name];
+                  },
+                };
               },
             };
           `;

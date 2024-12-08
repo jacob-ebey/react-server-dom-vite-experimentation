@@ -13,6 +13,10 @@ import type { ServerPayload } from "./entry.server.js";
 export async function handleFetch(request: Request) {
   const serverResponse: Response = await callServer(request);
 
+  if (request.headers.get("Accept")?.match(/\btext\/x-component\b/)) {
+    return serverResponse;
+  }
+
   if (!serverResponse.body) {
     throw new Error("Expected response body");
   }
@@ -26,6 +30,8 @@ export async function handleFetch(request: Request) {
 
   const { abort, pipe } = renderToPipeableStream(payload.root, {
     bootstrapModules,
+    // TODO: Enable experimental build to test formState
+    // formState: payload.formState,
   });
 
   request.signal.addEventListener("abort", () => abort());
