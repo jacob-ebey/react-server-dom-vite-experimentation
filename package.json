@@ -15,7 +15,7 @@
 		"test": "playwright test"
 	},
 	"dependencies": {
-		"@jacob-ebey/react-server-dom-vite": "19.0.0-experimental.5",
+		"@jacob-ebey/react-server-dom-vite": "19.0.0-experimental.13",
 		"@mjackson/node-fetch-server": "0.4.1",
 		"compression": "^1.7.5",
 		"express": "^4.21.2",

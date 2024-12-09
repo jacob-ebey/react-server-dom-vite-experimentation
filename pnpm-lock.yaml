@@ -14,8 +14,8 @@ importers:
   .:
     dependencies:
       '@jacob-ebey/react-server-dom-vite':
-        specifier: 19.0.0-experimental.5
-        version: 19.0.0-experimental.5(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
+        specifier: 19.0.0-experimental.13
+        version: 19.0.0-experimental.13(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
       '@mjackson/node-fetch-server':
         specifier: 0.4.1
         version: 0.4.1(patch_hash=4ylmknrave4pgkomotllg2fkau)
@@ -383,8 +383,8 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@jacob-ebey/react-server-dom-vite@19.0.0-experimental.5':
-    resolution: {integrity: sha512-HCbYc0dDAj5SKDg5fIjmufrM9NnfbcLY2raotG0qp0uSdG2gcYUO896xEfNIRoBwOcgsu3S3W+1x/Ypm2cnZtg==}
+  '@jacob-ebey/react-server-dom-vite@19.0.0-experimental.13':
+    resolution: {integrity: sha512-5gED5nU9lWzJUmLWTDJl4PpArhoGdvCcl1WcP4sQnS8kc+8D5mMOyYoMCOpQjpfgn4Yk6TDBXP8cnEuIY0ritg==}
     engines: {node: '>=0.10.0'}
     peerDependencies:
       react: ^19.0.0
@@ -1404,7 +1404,7 @@ snapshots:
   '@esbuild/win32-x64@0.24.0':
     optional: true
 
-  '@jacob-ebey/react-server-dom-vite@19.0.0-experimental.5(react-dom@19.0.0(react@19.0.0))(react@19.0.0)':
+  '@jacob-ebey/react-server-dom-vite@19.0.0-experimental.13(react-dom@19.0.0(react@19.0.0))(react@19.0.0)':
     dependencies:
       react: 19.0.0
       react-dom: 19.0.0(react@19.0.0)
