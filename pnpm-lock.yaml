@@ -4,11 +4,6 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
-patchedDependencies:
-  '@mjackson/node-fetch-server':
-    hash: 4ylmknrave4pgkomotllg2fkau
-    path: patches/@mjackson__node-fetch-server.patch
-
 importers:
 
   .:
@@ -20,8 +15,8 @@ importers:
         specifier: 0.0.5
         version: 0.0.5(@jacob-ebey/react-server-dom-vite@19.0.0-experimental.13(react-dom@19.0.0(react@19.0.0))(react@19.0.0))(rollup@4.28.1)(vite@6.0.3(@types/node@22.10.1))
       '@mjackson/node-fetch-server':
-        specifier: 0.4.1
-        version: 0.4.1(patch_hash=4ylmknrave4pgkomotllg2fkau)
+        specifier: 0.5.0
+        version: 0.5.0
       compression:
         specifier: ^1.7.5
         version: 1.7.5
@@ -413,6 +408,9 @@ packages:
 
   '@mjackson/node-fetch-server@0.4.1':
     resolution: {integrity: sha512-7R6Tvom12Uaybb10ClavdRiQmLevq0+cOfWgNVAm+FMsDoM20oXfLWAV91nOWZgwHQ4cDG8OUJiRJMlSztuhJA==}
+
+  '@mjackson/node-fetch-server@0.5.0':
+    resolution: {integrity: sha512-GZrkGuP3N7he0GdK9CCqpjabqsXjJa4tp0yKw973FoGAAOGE6WTcp3kcosRdeGYqtoFn7IEu84g3pItk4wRBFg==}
 
   '@playwright/test@1.49.0':
     resolution: {integrity: sha512-DMulbwQURa8rNIQrf94+jPJQ4FmOVdpE5ZppRNvWVjvhC+6sOeo28r8MgIpQRYouXRtt/FCCXU7zn20jnHR4Qw==}
@@ -1415,7 +1413,7 @@ snapshots:
   '@jacob-ebey/vite-react-server-dom@0.0.5(@jacob-ebey/react-server-dom-vite@19.0.0-experimental.13(react-dom@19.0.0(react@19.0.0))(react@19.0.0))(rollup@4.28.1)(vite@6.0.3(@types/node@22.10.1))':
     dependencies:
       '@jacob-ebey/react-server-dom-vite': 19.0.0-experimental.13(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
-      '@mjackson/node-fetch-server': 0.4.1(patch_hash=4ylmknrave4pgkomotllg2fkau)
+      '@mjackson/node-fetch-server': 0.4.1
       '@vitejs/plugin-react': 4.3.4(vite@6.0.3(@types/node@22.10.1))
       unplugin-rsc: 0.0.11(rollup@4.28.1)
       vite: 6.0.3(@types/node@22.10.1)
@@ -1440,7 +1438,9 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.0
 
-  '@mjackson/node-fetch-server@0.4.1(patch_hash=4ylmknrave4pgkomotllg2fkau)': {}
+  '@mjackson/node-fetch-server@0.4.1': {}
+
+  '@mjackson/node-fetch-server@0.5.0': {}
 
   '@playwright/test@1.49.0':
     dependencies:

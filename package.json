@@ -11,7 +11,7 @@
 	"dependencies": {
 		"@jacob-ebey/react-server-dom-vite": "19.0.0-experimental.13",
 		"@jacob-ebey/vite-react-server-dom": "0.0.5",
-		"@mjackson/node-fetch-server": "0.4.1",
+		"@mjackson/node-fetch-server": "0.5.0",
 		"compression": "^1.7.5",
 		"express": "^4.21.2",
 		"react": "^19.0.0",
@@ -28,10 +28,5 @@
 		"cross-env": "^7.0.3",
 		"playwright": "^1.49.0",
 		"vite": "^6.0.3"
-	},
-	"pnpm": {
-		"patchedDependencies": {
-			"@mjackson/node-fetch-server": "patches/@mjackson__node-fetch-server.patch"
-		}
 	}
 }
