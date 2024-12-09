@@ -5,8 +5,12 @@ import RSD from "@jacob-ebey/react-server-dom-vite/client";
 import { renderToPipeableStream } from "react-dom/server";
 import { injectRSCPayload } from "rsc-html-stream/server";
 
-// @ts-expect-error - virtual module with no types
-import { bootstrapModules, callServer, manifest } from "framework/react-client";
+import {
+	bootstrapModules,
+	callServer,
+	manifest,
+	// @ts-expect-error - virtual module with no types
+} from "virtual:@jacob-ebey/vite-react-server-dom/client-api";
 
 import type { ServerPayload } from "./entry.server.js";
 

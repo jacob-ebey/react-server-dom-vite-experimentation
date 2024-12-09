@@ -1,21 +1,16 @@
 {
 	"private": true,
 	"type": "module",
-	"imports": {
-		"#framework/call-server-browser": "./framework/call-server-browser.ts",
-		"#framework/call-server-prerender": "./framework/call-server-prerender.ts",
-		"#framework/references-server": "./framework/references-server.js",
-		"#framework/worker-production": "./framework/worker-production.js"
-	},
 	"scripts": {
 		"build": "vite build --app",
 		"dev": "vite dev",
 		"format": "npx biome format --write",
-		"start": "cross-env NODE_ENV=production node ./framework/serve.js dist/prerender/entry.prerender.js dist/server/entry.server.js dist/browser",
+		"start": "cross-env NODE_ENV=production node serve.js dist/prerender/entry.prerender.js dist/server/entry.server.js dist/browser",
 		"test": "playwright test"
 	},
 	"dependencies": {
 		"@jacob-ebey/react-server-dom-vite": "19.0.0-experimental.13",
+		"@jacob-ebey/vite-react-server-dom": "0.0.5",
 		"@mjackson/node-fetch-server": "0.4.1",
 		"compression": "^1.7.5",
 		"express": "^4.21.2",

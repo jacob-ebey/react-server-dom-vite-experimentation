@@ -2,13 +2,17 @@ import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 import * as wt from "node:worker_threads";
 
-import { fetchWorker } from "./worker-shared.js";
+import { fetchWorker } from "@jacob-ebey/vite-react-server-dom/worker-shared";
 
 let worker: wt.Worker;
 export function callServer(request: Request) {
 	if (!worker) {
 		worker = new wt.Worker(
-			fileURLToPath(import.meta.resolve("#framework/worker-production")),
+			fileURLToPath(
+				import.meta.resolve(
+					"@jacob-ebey/vite-react-server-dom/worker-production",
+				),
+			),
 			{
 				env: {
 					...process.env,

@@ -1,11 +1,11 @@
 import * as stream from "node:stream";
 
-// @ts-expect-error - no types
+// @ts-expect-error - no types yet
 import RSD from "@jacob-ebey/react-server-dom-vite/server";
 import type { ReactFormState } from "react-dom/client";
 
-// @ts-expect-error - virtual module with no types
-import { manifest } from "framework/react-server";
+// @ts-expect-error - no types yet
+import { manifest } from "virtual:@jacob-ebey/vite-react-server-dom/server-api";
 
 import { Document } from "./document.js";
 import { Router } from "./router.js";

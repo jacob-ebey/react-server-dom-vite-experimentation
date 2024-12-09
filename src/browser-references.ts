@@ -2,12 +2,12 @@ import {
 	createFromFetch,
 	createServerReference as createServerReferenceImp,
 	encodeReply,
-	// @ts-expect-error - no types
+	// @ts-expect-error - no types yet
 } from "@jacob-ebey/react-server-dom-vite/client";
 import { startTransition } from "react";
 
-// @ts-expect-error - virtual module with no types
-import { manifest } from "framework/react-client";
+// @ts-expect-error - no types yet
+import { manifest } from "virtual:@jacob-ebey/vite-react-server-dom/client-api";
 
 import type { ServerPayload } from "./entry.server.js";
 

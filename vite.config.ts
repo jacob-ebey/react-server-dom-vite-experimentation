@@ -1,11 +1,12 @@
 import { defineConfig } from "vite";
 
-import { framework } from "./framework/vite.js";
+import reactServerDom from "@jacob-ebey/vite-react-server-dom";
 
 export default defineConfig({
 	plugins: [
-		framework({
+		reactServerDom({
 			browserReferences: "src/browser-references.ts",
+			callServerPrerender: "src/call-server-prerender.ts",
 			entries: {
 				browser: "src/entry.browser.tsx",
 				prerender: "src/entry.prerender.tsx",

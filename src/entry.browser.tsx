@@ -1,14 +1,14 @@
 import {
 	createFromFetch,
 	createFromReadableStream,
-	// @ts-expect-error - no types
+	// @ts-expect-error - no types yet
 } from "@jacob-ebey/react-server-dom-vite/client";
 import { startTransition, StrictMode, useState } from "react";
 import { hydrateRoot } from "react-dom/client";
 import { rscStream } from "rsc-html-stream/client";
 
-// @ts-expect-error - virtual module with no types
-import { manifest } from "framework/react-client";
+// @ts-expect-error - no types yet
+import { manifest } from "virtual:@jacob-ebey/vite-react-server-dom/client-api";
 
 import type { ServerPayload } from "./entry.server.js";
 import { api, callServer } from "./browser-references.js";
