@@ -17,8 +17,8 @@ importers:
         specifier: 19.0.0-experimental.13
         version: 19.0.0-experimental.13(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
       '@jacob-ebey/vite-react-server-dom':
-        specifier: 0.0.4
-        version: 0.0.4(@jacob-ebey/react-server-dom-vite@19.0.0-experimental.13(react-dom@19.0.0(react@19.0.0))(react@19.0.0))(rollup@4.28.1)(vite@6.0.3(@types/node@22.10.1))
+        specifier: 0.0.5
+        version: 0.0.5(@jacob-ebey/react-server-dom-vite@19.0.0-experimental.13(react-dom@19.0.0(react@19.0.0))(react@19.0.0))(rollup@4.28.1)(vite@6.0.3(@types/node@22.10.1))
       '@mjackson/node-fetch-server':
         specifier: 0.4.1
         version: 0.4.1(patch_hash=4ylmknrave4pgkomotllg2fkau)
@@ -56,18 +56,12 @@ importers:
       '@types/react-dom':
         specifier: ^19.0.1
         version: 19.0.1
-      '@vitejs/plugin-react':
-        specifier: ^4.3.4
-        version: 4.3.4(vite@6.0.3(@types/node@22.10.1))
       cross-env:
         specifier: ^7.0.3
         version: 7.0.3
       playwright:
         specifier: ^1.49.0
         version: 1.49.0
-      unplugin-rsc:
-        specifier: 0.0.11
-        version: 0.0.11(rollup@4.28.1)
       vite:
         specifier: ^6.0.3
         version: 6.0.3(@types/node@22.10.1)
@@ -393,8 +387,8 @@ packages:
       react: ^19.0.0
       react-dom: ^19.0.0
 
-  '@jacob-ebey/vite-react-server-dom@0.0.4':
-    resolution: {integrity: sha512-dYBNRh4dHjylKutAjkhm1ks1vAakwdoz8UAzo/EDTLo785c2YYIOkOzQTYlrj5kLL8hOR9dqRBxX6mb3QGRkRw==}
+  '@jacob-ebey/vite-react-server-dom@0.0.5':
+    resolution: {integrity: sha512-ZREyEk45OmYJMD3RQ8y5N6k6CS+zvYOySaLvcYOMZPmkNdZI4hQo4LqtQSL4lj4E20fNA8XHkSaMdL+5xItRzw==}
     peerDependencies:
       '@jacob-ebey/react-server-dom-vite': '*'
       vite: ^6.0.0
@@ -1147,7 +1141,7 @@ snapshots:
       '@babel/helpers': 7.26.0
       '@babel/parser': 7.26.3
       '@babel/template': 7.25.9
-      '@babel/traverse': 7.24.1
+      '@babel/traverse': 7.26.4
       '@babel/types': 7.26.3
       convert-source-map: 2.0.0
       debug: 4.4.0
@@ -1418,7 +1412,7 @@ snapshots:
       react: 19.0.0
       react-dom: 19.0.0(react@19.0.0)
 
-  '@jacob-ebey/vite-react-server-dom@0.0.4(@jacob-ebey/react-server-dom-vite@19.0.0-experimental.13(react-dom@19.0.0(react@19.0.0))(react@19.0.0))(rollup@4.28.1)(vite@6.0.3(@types/node@22.10.1))':
+  '@jacob-ebey/vite-react-server-dom@0.0.5(@jacob-ebey/react-server-dom-vite@19.0.0-experimental.13(react-dom@19.0.0(react@19.0.0))(react@19.0.0))(rollup@4.28.1)(vite@6.0.3(@types/node@22.10.1))':
     dependencies:
       '@jacob-ebey/react-server-dom-vite': 19.0.0-experimental.13(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
       '@mjackson/node-fetch-server': 0.4.1(patch_hash=4ylmknrave4pgkomotllg2fkau)
